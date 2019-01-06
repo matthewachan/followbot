@@ -1,80 +1,108 @@
-# Lab 5 - Follow Bot
-Lab 5 for [COMSW4733 Computational Aspects of Robotics](http://www.cs.columbia.edu/~allen/F18/index.html) at Columbia University (Instructor: [Prof. Peter Allen](http://www.cs.columbia.edu/~allen/)).
+# followbot 
+> Autonomous control for driving Follow-bot
 
-## Introduction
-In this lab, you are required to make the turtlebot follow a yellow track and action differently at intersections based on visual information. This is simulated in a Gazebo simulator.
+followbot takes in a map and an initial position and autonomously navigates through the map. There are different control scripts provided based on the expected behavior.
+
+For example, the `part4.py` control script forces Follow-bot to follow the yellow line, while turning left or right at intersections when it sees an arrow pointing left/right.
+
+![](etc/screencap.gif)
 
 ## Usage
-This ROS package allows you to load 4 different maps in Gazebo.
 
-### Prerequisites
-The package is tested on `python 2.7`, `ROS Indigo`, `Ubuntu 14.04` with `OpenCV 3.1.0` and `numpy 1.15.1`.
+There are 4 Python scripts in this repository, corresponding with each part of the lab.
+
+Below are the commands required to run each part of the lab.
 
 ### Commands
-To launch turtlebot and map for [part 1](#part-1-preparation-20-points)
+To launch turtlebot and map for part 1
 ```
 roslaunch followbot launch.launch
+
+# Run this in a another terminal to control Followbot
+python part1.py
 ```
 
-To launch turtlebot and map for [part 2](#part-2-map-with-color-markers-40-points)
+To launch turtlebot and map for part 2
 ```
 ROBOT_INITIAL_POSE="-x -2.85 -y -0.27 -Y 1.53" roslaunch followbot launch.launch world_file:=color.world
+
+# Run this in a another terminal to control Followbot
+python part2.py
 ```
 
-To launch turtlebot and map for [part 3](#part-3-map-with-shape-markers-40-points)
+To launch turtlebot and map for part 3
 ```
 ROBOT_INITIAL_POSE="-x -2.85 -y -0.27 -Y 1.53" roslaunch followbot launch.launch world_file:=shape.world
+
+# Run this in a another terminal to control Followbot
+python part3.py
 ```
 
-To launch the map for [extra credits](#extra-credits-everything-in-the-same-color-10-points)
+To launch the map for extra credit
 ```
 ROBOT_INITIAL_POSE="-x -2.85 -y -0.27 -Y 1.53" roslaunch followbot launch.launch world_file:=extra.world
+
+# Run this in a another terminal to control Followbot
+python part4.py
 ```
-## Instructions and Rubric
-Related code for this lab can be found in Chapter 12 of [Programming Robotics with ROS](http://marte.aslab.upm.es/redmine/files/dmsf/p_drone-testbed/170324115730_268_Quigley_-_Programming_Robots_with_ROS.pdf). You should put your scripts under `src/`.
 
-### Part 1: Preparation (**20 points**)
-Use the command to load the map ([simple.png](worlds/simple.png)) for part 1. You should make the robot follow the yellow track nonstop. You video should show the robot following it for more than 1 round.
+## In-depth Explanation
 
-<p align="center">
-  <img src="imgs/simple_map.png", height="450">
-</p>
+### Line Following
 
-### Part 2: Map with color markers (40 points)
-Use the command to load the map ([color.png](worlds/color.png)) for part 2. You should make the robot
-- follow the yellow track when not at an intersection (**10 points**)
-- turn left at the intersection with a green marker(**10 points**)
-- turn right at the intersection with a blue marker (**10 points**)
-- stop exactly on the red marker (**10 points**)
+The logic for line following was derived from the Programming Robots with ROS example code. By applying a yellow color filter,
+we can get a binary image of the road. Then, we can isolate the part of the image directly in front of the robot by
+zeroing out pixels that are outside of the boundary we choose.
 
-<p align="center">
-  <img src="imgs/color_map.png", height="450">
-</p>
+Finally, we can adjust the robot's rotational velocity proportionally to the distance between the center of the road and the
+middle of it's camera to make it follow the road.
 
-### Part 3: Map with shape markers (40 points)
-Use the command to load the map ([shape.png](worlds/shape.png)) for part 3. You should make the robot
-- follow the yellow track when not at an intersection (**10 points**)
-- turn left at the intersection with a triangle marker pointing left (**10 points**)
-- turn right at the intersection with a triangle marker pointing right (**10 points**)
-- stop exactly on the star marker (**10 points**)
+This logic is contained in the `image_callback` method of the Followbot class.
 
-<p align="center">
-  <img src="imgs/shape_map.png", height="450">
-</p>
+### Turning
 
-### Extra credits: Everything in the same color (10 points)
-Use the command to load the map ([extra.png](worlds/extra.png)) for the extra credit part. You should make the robot behave the same as part 3. There is no partial credit for this part. You either get 0 or 10.
+The logic for turning in my implementation was the same for all parts. When a left turn symbol is detected, a certain fraction
+of pixel values on the right half of the yellow color filter are zeroed out for a duration of time (using Timers). This 
+essentially makes the robot blind to the right path of the intersection, so it follows the left path. 
 
-<p align="center">
-  <img src="imgs/extra_map.png", height="450">
-</p>
+The same logic applies to right turns.
 
-## Submission Guidelines
-- You should submit a `lab5_UNI1_UNI2.tar.gz` file which contains the modified package `followbot` that you cloned.
-- It should include all files that we need to reproduce your video demos.
-- You should replace everything in the existing `README.md` with the following sections:
-	- Usage: how to run your code to reproduce your video demos. Clearly explain the functionalities of all added scripts.
-	- Method: a brief description of your methods.
-	- Video: a link to the Youtube video of working demos. You should **concatenate** demo videos of all parts into one single video.
-	- Others: anything else you would like to include
-- **Violation of these submission instructions will result in point deduction.**
+The code for this is contained in `image_callback` and a few other Timer callback functions (i.e. `left_callback`, `right_callback`,
+etc.)
+
+### Detection
+
+The logic for detection in my implementation changed depending on the map.
+
+For the color-based turning map, I applied a blue, green and red color filter (in addition to the yellow one). When the sum
+of all of the blue, green or red pixel values in the color map exceeds a certain threshold, the corresponding stop/turn
+instruction is executed.
+
+For the shape-based turning map, I saved images of the shapes on the road taken from the robot's camera. Then, when the robot
+encounters a shape (i.e. if it's yellow or red color filter is above a certain threshold), it compares the current image
+to the previously saved images. If the error between the images is below a certain threshold, it executes the instruction
+corresponding with that image.
+
+The code for this is contained in the `image_callback` function of the Followbot class.
+
+## Meta
+
+**Author**: [Matthew Chan](https://github.com/matthewachan)
+
+Distributed under the GNU GPL v3.0 license. See ``LICENSE`` for more information.
+
+## Contributing
+
+1. [Fork](https://github.com/matthewachan/followbot/fork) the repo
+2. Create a feature branch (e.g. `git checkout -b feature/new_feature`)
+3. Add & commit your changes
+4. Push to your feature branch (e.g. `git push origin feature/new_feature`)
+5. Create a new pull request
+
+## References
+
+Followbot code used in this project was derived from examples in Programming Robots with ROS by Morgan Quigley, Brian Gerkey and William Smart.
+
+## Video
+
+The YouTube playlist for working demos of lab 5 is available at: [https://www.youtube.com/playlist?list=PLci6iiGYCad8RwVaezV-M4lH-F4jrUCEm](https://www.youtube.com/playlist?list=PLci6iiGYCad8RwVaezV-M4lH-F4jrUCEm)
