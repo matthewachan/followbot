@@ -1,4 +1,12 @@
-# COMS 4733 Lab 5: Autonomous Driving (Followbot)
+# followbot 
+> Autonomous control for driving Follow-bot
+
+followbot takes in a map and an initial position and autonomously navigates through the map. There are different control scripts provided based on the expected behavior.
+
+For example, the `part4.py` control script forces Follow-bot to follow the yellow line, while turning left or right at intersections when it sees an arrow pointing left/right.
+
+![](etc/screencap.gif)
+
 ## Usage
 
 There are 4 Python scripts in this repository, corresponding with each part of the lab.
@@ -38,7 +46,7 @@ ROBOT_INITIAL_POSE="-x -2.85 -y -0.27 -Y 1.53" roslaunch followbot launch.launch
 python part4.py
 ```
 
-## Method
+## In-depth Explanation
 
 ### Line Following
 
@@ -76,6 +84,20 @@ to the previously saved images. If the error between the images is below a certa
 corresponding with that image.
 
 The code for this is contained in the `image_callback` function of the Followbot class.
+
+## Meta
+
+**Author**: [Matthew Chan](https://github.com/matthewachan)
+
+Distributed under the GNU GPL v3.0 license. See ``LICENSE`` for more information.
+
+## Contributing
+
+1. [Fork](https://github.com/matthewachan/followbot/fork) the repo
+2. Create a feature branch (e.g. `git checkout -b feature/new_feature`)
+3. Add & commit your changes
+4. Push to your feature branch (e.g. `git push origin feature/new_feature`)
+5. Create a new pull request
 
 ## References
 
