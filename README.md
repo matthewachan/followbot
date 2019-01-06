@@ -7,6 +7,10 @@ For example, the `part4.py` control script forces Follow-bot to follow the yello
 
 ![](etc/screencap.gif)
 
+## Installation
+
+ROS Indigo and rViz are required to run the simulation. Installation instructions can be found [here](http://wiki.ros.org/indigo/Installation/Ubuntu).
+
 ## Usage
 
 There are 4 Python scripts in this repository, corresponding with each part of the lab.
